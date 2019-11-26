@@ -15,7 +15,7 @@
 
 */
 
-#![feature(rustc_private)]
+//#![feature(rustc_private)]
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
