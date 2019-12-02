@@ -15,7 +15,6 @@
 
 */
 
-#![feature(rustc_private)]
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
@@ -34,9 +33,6 @@ use log::{info, debug};
 use metadata::RuntimeMetadataPrefixed;
 use primitives::H256 as Hash;
 use primitives::crypto::Pair;
-
-#[cfg(feature = "std")]
-use ws::Result as WsResult;
 
 #[cfg(feature = "std")]
 use node_metadata::NodeMetadata;
@@ -142,7 +138,7 @@ impl<P> Api<P>
         module: &str,
         storage_key_name: &str,
         param: Option<Vec<u8>>,
-    ) -> WsResult<String> {
+    ) -> Result<String,&'static str> {
         let keyhash = storage_key_hash(module, storage_key_name, param);
 
         debug!("with storage key: {}", keyhash);
@@ -151,7 +147,7 @@ impl<P> Api<P>
     }
 
     // low level access
-    fn _get_request(url: String, jsonreq: String) -> WsResult<String> {
+    fn _get_request(url: String, jsonreq: String) -> Result<String, &'static str> {
         let (result_in, result_out) = channel();
         rpc::get(url, jsonreq.clone(), result_in.clone());
 
@@ -188,7 +184,7 @@ impl<P> Api<P>
         hexstr_to_u256(result_str).unwrap()
     }
 
-    pub fn get_request(&self, jsonreq: String) -> WsResult<String> {
+    pub fn get_request(&self, jsonreq: String) -> Result<String,&'static str> {
         Self::_get_request(self.url.clone(), jsonreq)
     }
 
@@ -197,11 +193,11 @@ impl<P> Api<P>
         storage_prefix: &str,
         storage_key_name: &str,
         param: Option<Vec<u8>>,
-    ) -> WsResult<String> {
+    ) -> Result<String,&str> {
         Self::_get_storage(self.url.clone(), storage_prefix, storage_key_name, param)
     }
 
-    pub fn send_extrinsic(&self, xthex_prefixed: String) -> WsResult<Hash> {
+    pub fn send_extrinsic(&self, xthex_prefixed: String) -> Result<Hash,&'static str> {
         debug!("sending extrinsic: {:?}", xthex_prefixed);
 
         let jsonreq = json_req::author_submit_and_watch_extrinsic(&xthex_prefixed).to_string();
