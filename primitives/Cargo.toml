@@ -43,7 +43,7 @@ default-features = false
 [dependencies.ed25519-dalek]
 version = "1.0.0-pre.1"
 default-features = false
-features = ["u64_backend"]
+features = ["nightly"]
 
 [dependencies.schnorrkel]
 version = "0.8.5"

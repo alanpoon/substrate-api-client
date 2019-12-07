@@ -33,7 +33,6 @@ use log::{info, debug};
 use metadata::RuntimeMetadataPrefixed;
 use primitives::H256 as Hash;
 use primitives::crypto::Pair;
-
 #[cfg(feature = "std")]
 use node_metadata::NodeMetadata;
 
