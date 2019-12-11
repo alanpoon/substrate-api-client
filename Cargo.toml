@@ -28,7 +28,8 @@ features = [
     'Response',
     'EventTarget',
     'Event',
-    'MessageEvent'
+    'MessageEvent',
+		'ErrorEvent'
 ]
 
 [dependencies.primitives]

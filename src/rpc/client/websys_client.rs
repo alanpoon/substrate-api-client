@@ -1,6 +1,6 @@
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
-use web_sys::{MessageEvent, WebSocket};
+use web_sys::{MessageEvent, WebSocket,ErrorEvent};
 use super::{ResultE,OnMessageFn};
 use std::sync::mpsc::Sender as ThreadOut;
 
@@ -19,6 +19,7 @@ pub fn start_rpc_client_thread(
   result_in: ThreadOut<String>,
   on_message_fn: OnMessageFn,
 ) {
+  console_log!("jsonreq: {:?}",jsonreq);
   let ws = WebSocket::new(&url).unwrap();
   let ws_c = ws.clone();
   let on_message = {
@@ -45,6 +46,21 @@ pub fn start_rpc_client_thread(
   };
   
   ws.set_onmessage(Some(on_message.as_ref().unchecked_ref()));
-  ws.send_with_str(&jsonreq).unwrap();
+  on_message.forget();
+  let onerror_callback = Closure::wrap(Box::new(move |e: ErrorEvent| {
+      console_log!("error event: {:?}", e);
+  }) as Box<dyn FnMut(ErrorEvent)>);
+  ws.set_onerror(Some(onerror_callback.as_ref().unchecked_ref()));
+  onerror_callback.forget();
+  let cloned_ws = ws.clone();
+  let onopen_callback = Closure::wrap(Box::new(move |_| {
+      console_log!("socket opened");
+      match cloned_ws.send_with_str(&jsonreq) {
+          Ok(_) => console_log!("message successfully sent"),
+          Err(err) => console_log!("error sending message: {:?}", err),
+      }
+  }) as Box<dyn FnMut(JsValue)>);
+  ws.set_onopen(Some(onopen_callback.as_ref().unchecked_ref()));
+  onopen_callback.forget();
 
 }
