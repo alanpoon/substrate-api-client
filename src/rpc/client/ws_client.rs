@@ -1,26 +1,26 @@
 use ws::connect;
-use std::sync::mpsc::Sender as ThreadOut;
+
 use ws::{CloseCode,Handler, Result,Message,Sender,Handshake};
 use std::thread;
 use super::{ResultE,OnMessageFn};
-
+use futures_signals::signal::Mutable;
 use log::{debug, info};
 
 pub struct RpcClient {
     pub out: Sender,
     pub request: String,
-    pub result: ThreadOut<String>,
+    pub result: Mutable<String>,
     pub on_message_fn: OnMessageFn,
 }
 impl Handler for RpcClient {
   fn on_open(&mut self,_: Handshake ) -> Result<()> {
-      info!("sending request: {}", self.request);
+      println!("sending request: {}", self.request);
       self.out.send(self.request.clone()).unwrap();
       Ok(())
   }
 
   fn on_message(&mut self, msg: Message) -> Result<()> {
-      info!("got message");
+      println!("got message");
       debug!("{}", msg);
       let msgg = msg.as_text().unwrap();
       let res_e = (self.on_message_fn)(&msgg);
@@ -30,10 +30,12 @@ impl Handler for RpcClient {
           self.out.close(CloseCode::Normal).unwrap();
         },
         ResultE::S(s)=>{
-          self.result.send(s).unwrap();
+          println!("s {:?}",s);
+          self.result.set(s);
         },
         ResultE::SClose(s)=>{
-          self.result.send(s).unwrap();
+          println!("s {:?}",s);
+          self.result.set(s);
           self.out.close(CloseCode::Normal).unwrap();
         }
       }
@@ -45,7 +47,7 @@ impl Handler for RpcClient {
 pub fn start_rpc_client_thread(
   url: String,
   jsonreq: String,
-  result_in: ThreadOut<String>,
+  result_in: Mutable<String>,
   on_message_fn: OnMessageFn,
 ) {
   println!("asa {:?}",jsonreq);

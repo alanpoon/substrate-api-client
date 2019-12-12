@@ -2,8 +2,7 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use web_sys::{MessageEvent, WebSocket,ErrorEvent};
 use super::{ResultE,OnMessageFn};
-use std::sync::mpsc::Sender as ThreadOut;
-
+use futures_signals::signal::Mutable;
 macro_rules! console_log {
   ($($t:tt)*) => (log(&format_args!($($t)*).to_string()))
 }
@@ -16,7 +15,7 @@ extern "C" {
 pub fn start_rpc_client_thread(
   url: String,
   jsonreq: String,
-  result_in: ThreadOut<String>,
+  result_in: Mutable<String>,
   on_message_fn: OnMessageFn,
 ) {
   console_log!("jsonreq: {:?}",jsonreq);
@@ -35,10 +34,10 @@ pub fn start_rpc_client_thread(
             ws_c.close_with_code(1000).unwrap();
           },
           ResultE::S(s)=>{
-            result_in.send(s).unwrap();
+            result_in.set(s);
           },
           ResultE::SClose(s)=>{
-            result_in.send(s).unwrap();
+            result_in.set(s);
             ws_c.close_with_code(1000).unwrap();
           }
         }

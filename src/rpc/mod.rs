@@ -15,28 +15,25 @@
 
 */
 
-use std::sync::mpsc::Sender as ThreadOut;
-
-
 use client::*;
-
+use futures_signals::signal::Mutable;
 mod client;
 pub mod json_req;
 
-pub fn get(url: String, json_req: String, result_in: ThreadOut<String>) {
-    start_rpc_client_thread(url, json_req, result_in, on_get_request_msg)
+pub fn get(url: String, json_req: String,result_in:Mutable<String>) {
+    start_rpc_client_thread(url, json_req,result_in, on_get_request_msg)
 }
 
-pub fn send_extrinsic_and_wait_until_finalized(
+pub async fn send_extrinsic_and_wait_until_finalized(
     url: String,
     json_req: String,
-    result_in: ThreadOut<String>,
+    result_in:Mutable<String>
 ) {
-    start_rpc_client_thread(url, json_req, result_in, on_extrinsic_msg)
+    start_rpc_client_thread(url, json_req,result_in, on_extrinsic_msg)
 }
 
-pub fn start_event_subscriber(url: String, json_req: String, result_in: ThreadOut<String>) {
-    start_rpc_client_thread(url, json_req, result_in, on_subscription_msg)
+pub async fn start_event_subscriber(url: String, json_req: String,result_in:Mutable<String>) {
+    start_rpc_client_thread(url, json_req, result_in,on_subscription_msg)
 }
 
 pub use client::start_rpc_client_thread;
