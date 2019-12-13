@@ -187,5 +187,13 @@ path = "src/examples/example_compose_extrinsic_offline.rs"
 name = "example_sudo"
 path = "src/examples/example_sudo.rs"
 
+[[example]]
+name = "signal"
+path = "src/examples/signal.rs"
+
+[[example]]
+name = "signal2"
+path = "src/examples/signal2.rs"
+
 [patch."https://github.com/paritytech/substrate"]
 substrate-primitives = { package = "substrate-primitives", path = "./primitives", default-features = false }
