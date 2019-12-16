@@ -62,7 +62,14 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::spawn_local;
 use futures_signals::signal::Mutable;
 use futures_signals::signal::SignalExt;
-
+macro_rules! console_log {
+    ($($t:tt)*) => (log(&format_args!($($t)*).to_string()))
+  }
+  #[wasm_bindgen]
+  extern "C" {
+      #[wasm_bindgen(js_namespace = console)]
+      fn log(s: &str);
+  }
 #[cfg(feature = "std")]
 #[derive(Clone)]
 pub struct Api<P: Pair> {
@@ -153,33 +160,18 @@ impl<P> Api<P>
     // low level access
     #[cfg(not(target_arch = "wasm32"))]
     async fn _get_request(url: String, jsonreq: String) -> Result<String, &'static str> {
-        let now = std::time::Instant::now();
-        println!("before {:?}",now.elapsed().as_secs());
         let result_in = Mutable::new("".to_string());
         rpc::get(url, jsonreq.clone(), result_in.clone());
-        let now2 = std::time::Instant::now();
-        println!("before future {:?}",now2.elapsed().as_secs());
-        let future = result_in.signal_cloned().to_future();
-        //let future = result_in.signal_cloned();
-        let now3 = std::time::Instant::now();
-        println!("after future {:?}",now3.elapsed().as_secs());
-        let k = future.await;
-        println!("k {:?}",k);
-        Ok(k)
+        let result= result_in.signal_cloned().before("".to_string()).await;
+        Ok(result.unwrap())
     }
     
     #[cfg(target_arch = "wasm32")]
     async fn _get_request(url: String, jsonreq: String) -> Result<String, &'static str> {
         let result_in = Mutable::new("".to_string());
         rpc::get(url, jsonreq.clone(), result_in.clone());
-        let future = result_in.signal_cloned().map(|value| {
-            // This code is run for the current value of my_state, and also every time my_state changes
-            println!("{}", value);
-            Ok(JsValue::from(value))
-        }).to_future();
-        let p =wasm_bindgen_futures::future_to_promise(future);
-        let result = wasm_bindgen_futures::JsFuture::from(p).await.unwrap();
-        Ok(result.as_string().unwrap())
+        let result= result_in.signal_cloned().before("".to_string()).await;
+        Ok(result.unwrap())
     }
     pub async fn get_metadata(&self) -> RuntimeMetadataPrefixed {
         Self::_get_metadata(self.url.clone()).await

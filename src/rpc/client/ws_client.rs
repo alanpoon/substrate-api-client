@@ -14,14 +14,11 @@ pub struct RpcClient {
 }
 impl Handler for RpcClient {
   fn on_open(&mut self,_: Handshake ) -> Result<()> {
-      println!("sending request: {}", self.request);
       self.out.send(self.request.clone()).unwrap();
       Ok(())
   }
 
   fn on_message(&mut self, msg: Message) -> Result<()> {
-      println!("got message");
-      debug!("{}", msg);
       let msgg = msg.as_text().unwrap();
       let res_e = (self.on_message_fn)(&msgg);
       match res_e {
@@ -30,11 +27,9 @@ impl Handler for RpcClient {
           self.out.close(CloseCode::Normal).unwrap();
         },
         ResultE::S(s)=>{
-          println!("s {:?}",s);
           self.result.set(s);
         },
         ResultE::SClose(s)=>{
-          println!("s {:?}",s);
           self.result.set(s);
           self.out.close(CloseCode::Normal).unwrap();
         }
@@ -50,7 +45,6 @@ pub fn start_rpc_client_thread(
   result_in: Mutable<String>,
   on_message_fn: OnMessageFn,
 ) {
-  println!("asa {:?}",jsonreq);
   let _client = thread::Builder::new()
       .name("client".to_owned())
       .spawn(move || {
