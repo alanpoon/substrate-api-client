@@ -53,6 +53,7 @@ pub mod rpc;
 use runtime_primitives::{AccountId32, MultiSignature};
 use futures_signals::signal::Mutable;
 use futures_signals::signal::SignalExt;
+use futures_util::stream::StreamExt;
 
 #[cfg(feature = "std")]
 #[derive(Clone)]
@@ -163,8 +164,10 @@ impl<P> Api<P>
     async fn _get_request(url: String, jsonreq: String) -> Result<String, &'static str> {
         let result_in = Mutable::new("".to_string());
         rpc::get(url, jsonreq.clone(), result_in.clone());
-        let result= result_in.signal_cloned().before("".to_string()).await;
-        Ok(result.unwrap())
+        let mut stream= result_in.signal_cloned().to_stream();
+        stream.next().await;
+        let r2 = stream.next().await;
+        Ok(r2.unwrap())
     }
 
     pub async fn get_metadata(&self) -> RuntimeMetadataPrefixed {
